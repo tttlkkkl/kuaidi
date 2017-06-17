@@ -1,4 +1,4 @@
-package notice
+package kuaidi
 
 import (
 	"crypto/md5"
@@ -54,7 +54,7 @@ type Response struct {
 
 //Send 发送验证码消息 code 需要发送的验证码，sendType 1发送短信验证码 2 发送语音验证码
 func (n *Notice) Send(mobile string, code int64, sendType int) error {
-	if sendType != 1 && sendType != 2 {
+	if sendType != voiceType && sendType != smsType {
 		return errors.New(typeErr)
 	}
 	formData := make(url.Values)

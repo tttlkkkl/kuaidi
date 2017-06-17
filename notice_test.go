@@ -1,4 +1,4 @@
-package notice
+package kuaidi
 
 import "testing"
 
