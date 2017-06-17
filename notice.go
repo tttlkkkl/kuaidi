@@ -31,7 +31,7 @@ const (
 )
 
 //Auth 认证信息
-type Auth struct {
+type auth struct {
 	//User 用户名
 	user string
 	//Password 密码
@@ -40,7 +40,7 @@ type Auth struct {
 
 //Notice 通知结构
 type Notice struct {
-	auth *Auth
+	auth *auth
 	URL  string
 }
 
@@ -104,18 +104,18 @@ func (n *Notice) encryption(times int64) string {
 
 //NewNotice 初始化授权结构
 func NewNotice(user string, password string, url string) *Notice {
-	return &Notice{&Auth{user, password}, url}
+	return &Notice{&auth{user, password}, url}
 }
 
 //SendSms 发送短信验证码,使用默认配置
 func SendSms(mobile string, code int64) error {
-	n := &Notice{&Auth{user, password}, URL}
+	n := &Notice{&auth{user, password}, URL}
 	return n.Send(mobile, code, smsType)
 }
 
 //SendVoice 发送语音验证码，使用默认配置
 func SendVoice(mobile string, code int64) error {
-	n := &Notice{&Auth{user, password}, URL}
+	n := &Notice{&auth{user, password}, URL}
 	return n.Send(mobile, code, voiceType)
 }
 
