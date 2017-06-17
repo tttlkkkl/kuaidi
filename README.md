@@ -29,7 +29,7 @@ func main() {
 		fmt.Println(err)
 	}
 	//发送短信验证码，使用默认配置，可以直接修改源码包中的配置
-	err := kuaidi.SendSms(mobile, kuaidi.RandInt(1000, 9999))
+	err = kuaidi.SendSms(mobile, kuaidi.RandInt(1000, 9999))
 	if err != nil {
 		fmt.Println(err)
 	}
