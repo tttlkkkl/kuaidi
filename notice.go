@@ -5,13 +5,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,7 +19,7 @@ const (
 	//user 默认用户名配置
 	user = "test"
 	//password 默认密码配置
-	password = "123456"
+	password = "12345678"
 	//URL 默认url地址
 	URL = "http://capi.yuntongzhi.vip/Api/Sms/sendSms"
 	//SmsType 短信验证码
@@ -28,6 +28,10 @@ const (
 	voiceType = int(2)
 	//typeErr 验证码类型错误提示
 	typeErr = "不支持的发送类型"
+	//Template
+	template = "【云通知】您的验证码是：【变量】。请不要把验证码泄露给其他人。如非本人操作，可不用理会"
+	//模板变量
+	variable = "【变量】"
 )
 
 //Auth 认证信息
@@ -40,8 +44,10 @@ type auth struct {
 
 //Notice 通知结构
 type Notice struct {
-	auth *auth
-	URL  string
+	auth     *auth
+	URL      string
+	Template string
+	Variable string
 }
 
 //Response 借口返回信息
@@ -53,18 +59,18 @@ type Response struct {
 }
 
 //Send 发送验证码消息 code 需要发送的验证码，sendType 1发送短信验证码 2 发送语音验证码
-func (n *Notice) Send(mobile string, code int64, sendType int) error {
+func (n *Notice) Send(mobile string, code string, sendType int) error {
 	if sendType != voiceType && sendType != smsType {
 		return errors.New(typeErr)
 	}
 	formData := make(url.Values)
 	timeNow := time.Now().Unix()
-	formData.Set("content", strconv.FormatInt(code, 10))
+	formData.Set("content", n.getContent(code, sendType, template))
 	formData.Set("times", strconv.FormatInt(timeNow, 10))
 	formData.Set("user", n.auth.user)
 	formData.Set("passwd", n.encryption(timeNow))
 	formData.Set("stype", strconv.Itoa(sendType))
-	fmt.Println(formData)
+	formData.Set("mobile", mobile)
 	var response *http.Response
 	var err error
 	var body []byte
@@ -79,7 +85,6 @@ func (n *Notice) Send(mobile string, code int64, sendType int) error {
 	}
 	Response := new(Response)
 	err = json.Unmarshal(body, Response)
-	fmt.Println(string(body))
 	if err != nil {
 		return err
 	}
@@ -92,30 +97,38 @@ func (n *Notice) Send(mobile string, code int64, sendType int) error {
 	return nil
 }
 
+//getCount 组合验证码内容
+func (n *Notice) getContent(code string, sendType int, template string) string {
+	if sendType == voiceType {
+		return code
+	}
+	return strings.Replace(n.Template, n.Variable, code, -1)
+}
+
 //密码加密
 func (n *Notice) encryption(times int64) string {
 	m := md5.New()
-	io.WriteString(m, string(n.auth.password))
-	v := m.Sum(nil)
-	passwordMd5 := hex.EncodeToString(v) + strconv.FormatInt(times, 10)
-	io.WriteString(m, string(passwordMd5))
+	io.WriteString(m, n.auth.password)
+	v := hex.EncodeToString(m.Sum(nil))
+	m.Reset()
+	io.WriteString(m, v+strconv.FormatInt(times, 10))
 	return hex.EncodeToString(m.Sum(nil))
 }
 
 //NewNotice 初始化授权结构
-func NewNotice(user string, password string, url string) *Notice {
-	return &Notice{&auth{user, password}, url}
+func NewNotice(user string, password string, url string, template string, variable string) *Notice {
+	return &Notice{&auth{user, password}, url, template, variable}
 }
 
 //SendSms 发送短信验证码,使用默认配置
-func SendSms(mobile string, code int64) error {
-	n := &Notice{&auth{user, password}, URL}
+func SendSms(mobile string, code string) error {
+	n := &Notice{&auth{user, password}, URL, template, variable}
 	return n.Send(mobile, code, smsType)
 }
 
 //SendVoice 发送语音验证码，使用默认配置
-func SendVoice(mobile string, code int64) error {
-	n := &Notice{&auth{user, password}, URL}
+func SendVoice(mobile string, code string) error {
+	n := &Notice{&auth{user, password}, URL, template, variable}
 	return n.Send(mobile, code, voiceType)
 }
 
