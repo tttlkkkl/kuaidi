@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -28,6 +29,10 @@ const (
 	voiceType = int(2)
 	//typeErr 验证码类型错误提示
 	typeErr = "不支持的发送类型"
+	//mobileErr 手机号码错误提示
+	mobileErr = "手机号码格式错误"
+	//codeLenErr 验证码长度错误
+	codeLenErr = "验证码长度不符"
 	//Template
 	template = "【云通知】您的验证码是：【变量】。请不要把验证码泄露给其他人。如非本人操作，可不用理会"
 	//模板变量
@@ -62,6 +67,13 @@ type Response struct {
 func (n *Notice) Send(mobile string, code string, sendType int) error {
 	if sendType != voiceType && sendType != smsType {
 		return errors.New(typeErr)
+	}
+	if !n.isMobile(mobile) {
+		return errors.New(mobileErr)
+	}
+	codeLen := len(code)
+	if codeLen < 4 || codeLen > 8 {
+		return errors.New(codeLenErr)
 	}
 	formData := make(url.Values)
 	timeNow := time.Now().Unix()
@@ -113,6 +125,12 @@ func (n *Notice) encryption(times int64) string {
 	m.Reset()
 	io.WriteString(m, v+strconv.FormatInt(times, 10))
 	return hex.EncodeToString(m.Sum(nil))
+}
+
+//isMobile 是否是手机号码
+func (n *Notice) isMobile(mobile string) bool {
+	reg := regexp.MustCompile("^(13[0-9]|14[57]|15[0-35-9]|18[07-9])\\\\d{8}$")
+	return reg.MatchString(mobile)
 }
 
 //NewNotice 初始化授权结构

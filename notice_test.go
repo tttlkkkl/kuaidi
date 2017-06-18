@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-const mobile = "18025434220"
+const mobile = "18000000000"
 
 //Test_SendByAuth 测试指定授权信息的发送
 func Test_SendByAuth(t *testing.T) {
