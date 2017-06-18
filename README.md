@@ -1,7 +1,8 @@
 # kuaidi
-云通知go语言包
  
-安装：
+### 快递哥云通知go语言包
+
+#### 安装使用：
 go get github.com/tttlkkkl/kuaidi
 
  
